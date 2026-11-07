@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Misi Peneroka Kata - Roda Impian Bahasa Melayu</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Canvas Confetti Library -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <!-- Font support -->
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Quicksand', sans-serif;
+      background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4338ca 100%);
+      min-height: 100vh;
+      color: #fff;
+      overflow-x: hidden;
+      user-select: none;
+    }
+    .font-heading {
+      font-family: 'Fredoka One', cursive;
+    }
+    /* Custom button animations */
+    .btn-bounce {
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .btn-bounce:hover {
+      transform: translateY(-3px) scale(1.02);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+    }
+    .btn-bounce:active {
+      transform: translateY(1px) scale(0.98);
+    }
+    /* Glowing effects */
+    .glow-gold {
+      box-shadow: 0 0 15px rgba(251, 191, 36, 0.6);
+    }
+    /* Custom Scrollbar for Modal content if needed */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(255,255,255,0.1);
+      border-radius: 10px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #f59e0b;
+      border-radius: 10px;
+    }
+  </style>
+</head>
+<body class="flex flex-col items-center justify-between p-3 sm:p-6 min-h-screen">
+
+  <!-- TOP BAR: Header & Stats -->
+  <header class="w-full max-w-4xl bg-indigo-900/80 backdrop-blur-md p-4 rounded-2xl border-2 border-indigo-400/30 shadow-xl mb-4">
+    <div class="flex flex-wrap justify-between items-center gap-3">
+      <!-- Title -->
+      <div class="flex items-center space-x-2">
+        <span class="text-3xl sm:text-4xl">🚀</span>
+        <div>
+          <h1 class="font-heading text-xl sm:text-2xl text-yellow-300 tracking-wide">MISI PENEROKA KATA</h1>
+          <p class="text-xs text-indigo-200">Kata Tunggal vs Kata Ganda</p>
+        </div>
+      </div>
+
+      <!-- Player Stats Bar -->
+      <div class="flex items-center space-x-3 sm:space-x-5 text-sm sm:text-base font-bold">
+        <!-- Level Badge -->
+        <div class="bg-indigo-950/80 px-3 py-1.5 rounded-xl border border-indigo-500/40 flex items-center gap-1.5">
+          <span class="text-indigo-300">Tahap:</span>
+          <span id="level-num" class="text-yellow-400 font-heading">1</span>
+        </div>
+        <!-- Bintang / Stars -->
+        <div class="bg-indigo-950/80 px-3 py-1.5 rounded-xl border border-amber-500/40 flex items-center gap-1.5">
+          <span>⭐</span>
+          <span id="star-count" class="text-amber-300 font-heading">0/10</span>
+        </div>
+        <!-- Score -->
+        <div class="bg-indigo-950/80 px-3 py-1.5 rounded-xl border border-emerald-500/40 flex items-center gap-1.5">
+          <span>🎯</span>
+          <span id="score-val" class="text-emerald-400 font-heading">0</span>
+        </div>
+        <!-- Sound Toggle Button -->
+        <button id="sound-btn" onclick="toggleSound()" class="bg-indigo-800 hover:bg-indigo-700 p-2 rounded-xl border border-indigo-400/40 transition" title="Tukar Bunyi">
+          <span id="sound-icon" class="text-lg">🔊</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Progress Bar to Goal -->
+    <div class="w-full bg-indigo-950/80 rounded-full h-3.5 mt-3 p-0.5 border border-indigo-500/30">
+      <div id="progress-bar" class="bg-gradient-to-r from-amber-400 to-yellow-300 h-full rounded-full transition-all duration-500 shadow-sm" style="width: 0%"></div>
+    </div>
+  </header>
+
+  <!-- MAIN GAME AREA -->
+  <main class="w-full max-w-4xl flex-1 flex flex-col items-center justify-center relative my-2">
+
+    <!-- STEP 1: WHEEL SPIN SCREEN -->
+    <div id="wheel-screen" class="w-full flex flex-col items-center justify-center space-y-5 py-2">
+      <!-- Instruction Banner -->
+      <div class="bg-indigo-800/60 border border-indigo-400/40 px-6 py-2.5 rounded-2xl text-center shadow-lg animate-pulse">
+        <p class="text-sm sm:text-base font-semibold text-yellow-200">
+          👇 Klik butang "PUSING RODA" untuk membuka cabaran perkataan!
+        </p>
+      </div>
+
+      <!-- Roda & Pointer Container -->
+      <div class="relative flex items-center justify-center p-2">
+        <!-- Wheel Pointer / Arrow -->
+        <div class="absolute -top-3 z-20 w-0 h-0 border-l-[18px] border-l-transparent border-r-[18px] border-r-transparent border-t-[32px] border-t-yellow-400 filter drop-shadow-md"></div>
+        
+        <!-- Canvas Wheel -->
+        <div class="relative p-2 bg-gradient-to-b from-yellow-400/40 to-indigo-600/40 rounded-full border-4 border-yellow-400 shadow-2xl">
+          <canvas id="wheel-canvas" width="380" height="380" class="max-w-[280px] max-h-[280px] sm:max-w-[360px] sm:max-h-[360px] rounded-full"></canvas>
+        </div>
+      </div>
+
+      <!-- Spin Button -->
+      <button id="spin-btn" onclick="spinWheel()" class="btn-bounce bg-gradient-to-r from-yellow-400 via-amber-500 to-orange-500 text-indigo-950 font-heading text-xl sm:text-2xl px-10 py-4 rounded-2xl shadow-xl border-b-4 border-amber-700 flex items-center space-x-3 glow-gold">
+        <span>🎡</span>
+        <span>PUSING RODA!</span>
+      </button>
+    </div>
+
+    <!-- STEP 2: QUESTION & CHALLENGE MODAL / CARD -->
+    <div id="question-card" class="hidden w-full max-w-xl bg-indigo-900/90 border-2 border-indigo-400/50 backdrop-blur-lg rounded-3xl p-6 sm:p-8 shadow-2xl flex-col items-center text-center space-y-6">
+      
+      <!-- Challenge Header -->
+      <div class="space-y-1">
+        <span class="bg-indigo-800 text-indigo-200 text-xs uppercase px-3 py-1 rounded-full font-bold border border-indigo-500/30">Cabaran Perkataan</span>
+        <h2 class="text-lg sm:text-xl font-bold text-indigo-100">Apakah jenis perkataan ini?</h2>
+      </div>
+
+      <!-- Target Word Display Box -->
+      <div class="w-full bg-gradient-to-r from-indigo-950 via-purple-950 to-indigo-950 border-2 border-amber-400/70 p-6 rounded-2xl shadow-inner my-2">
+        <span id="target-word" class="font-heading text-3xl sm:text-5xl text-yellow-300 tracking-wider block drop-shadow-md">
+          -
+        </span>
+      </div>
+
+      <!-- Answer Options (Buttons) -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
+        <button onclick="checkAnswer('Kata Tunggal')" class="btn-bounce bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-heading text-lg sm:text-xl py-4 px-6 rounded-2xl border-b-4 border-blue-800 shadow-lg flex items-center justify-center space-x-2">
+          <span>📦</span>
+          <span>Kata Tunggal</span>
+        </button>
+
+        <button onclick="checkAnswer('Kata Ganda')" class="btn-bounce bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-400 hover:to-purple-500 text-white font-heading text-lg sm:text-xl py-4 px-6 rounded-2xl border-b-4 border-purple-800 shadow-lg flex items-center justify-center space-x-2">
+          <span>👥</span>
+          <span>Kata Ganda</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- STEP 3: FEEDBACK MODAL (BETUL / SALAH) -->
+    <div id="feedback-card" class="hidden w-full max-w-lg bg-indigo-950/95 border-2 border-indigo-400/50 rounded-3xl p-6 sm:p-8 shadow-2xl flex-col items-center text-center space-y-5">
+      <div id="feedback-icon" class="text-6xl sm:text-7xl animate-bounce">
+        🎉
+      </div>
+      
+      <h3 id="feedback-title" class="font-heading text-2xl sm:text-3xl text-yellow-300">
+        TAHNIAH! BETUL!
+      </h3>
+
+      <div class="bg-indigo-900/60 p-4 rounded-xl border border-indigo-500/30 w-full text-left">
+        <p id="feedback-explanation" class="text-sm sm:text-base text-indigo-100 leading-relaxed">
+          Penerangan akan terpapar di sini.
+        </p>
+      </div>
+
+      <button id="next-btn" onclick="nextRound()" class="btn-bounce bg-gradient-to-r from-emerald-400 to-teal-500 text-indigo-950 font-heading text-xl px-8 py-3.5 rounded-2xl shadow-lg border-b-4 border-teal-700 w-full">
+        TERUSKAN MISI ➔
+      </button>
+    </div>
+
+    <!-- STEP 4: GAME OVER / VICTORY CERTIFICATE MODAL -->
+    <div id="victory-card" class="hidden w-full max-w-xl bg-gradient-to-b from-indigo-900 via-indigo-950 to-purple-950 border-4 border-yellow-400 rounded-3xl p-6 sm:p-8 shadow-2xl flex-col items-center text-center space-y-6">
+      <div class="text-6xl sm:text-7xl">🏆</div>
+      <div>
+        <h2 class="font-heading text-2xl sm:text-4xl text-yellow-300">TAHNIAH! MISI SELESAI!</h2>
+        <p class="text-sm sm:text-base text-indigo-200 mt-1">Anda adalah Master Peneroka Kata Bahasa Melayu!</p>
+      </div>
+
+      <!-- Certificate Box -->
+      <div class="w-full bg-indigo-900/80 border-2 border-dashed border-amber-400/60 p-5 rounded-2xl space-y-3">
+        <div class="text-xs uppercase tracking-widest text-amber-300 font-bold">Pencapaian Master Kata</div>
+        <div class="flex justify-around text-center py-2">
+          <div>
+            <div class="text-xs text-indigo-300">Jumlah Skor</div>
+            <div id="final-score" class="font-heading text-2xl text-emerald-400">0</div>
+          </div>
+          <div>
+            <div class="text-xs text-indigo-300">Bintang Dikumpul</div>
+            <div class="font-heading text-2xl text-amber-300">10 / 10 ⭐</div>
+          </div>
+          <div>
+            <div class="text-xs text-indigo-300">Peringkat</div>
+            <div class="font-heading text-2xl text-cyan-300">Tamat 🎓</div>
+          </div>
+        </div>
+        <p class="text-xs text-indigo-300 italic">"Bahasa Jiwa Bangsa — Syabas Kerana Kuasai Kata Tunggal & Kata Ganda!"</p>
+      </div>
+
+      <button onclick="resetGame()" class="btn-bounce bg-gradient-to-r from-yellow-400 to-amber-500 text-indigo-950 font-heading text-xl px-8 py-4 rounded-2xl shadow-xl border-b-4 border-amber-700 w-full glow-gold">
+        🔄 MAIN SEMULA
+      </button>
+    </div>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="w-full text-center text-xs text-indigo-300/70 py-2">
+    Bahan Pembelajaran Interaktif Bahasa Melayu • Sesuai untuk Google Sites
+  </footer>
+
+  <!-- JAVASCRIPT GAME LOGIC -->
+  <script>
+    /* ===================================================================
+       1. BANK DATA PERKATAAN & PENERANGAN (Kata Tunggal & Kata Ganda)
+       =================================================================== */
+    const wordBank = [
+      // KATA TUNGGAL
+      { word: "rumah", type: "Kata Tunggal", exp: "'rumah' ialah Kata Tunggal kerana ia terdiri daripada satu bentuk kata dasar sahaja tanpa sebarang imbuhan atau penggandaan." },
+      { word: "siku", type: "Kata Tunggal", exp: "'siku' ialah Kata Tunggal kerana terdiri daripada satu kata dasar tunggal." },
+      { word: "jalan", type: "Kata Tunggal", exp: "'jalan' ialah Kata Tunggal yang membawa makna asas tanpa imbuhan." },
+      { word: "pokok", type: "Kata Tunggal", exp: "'pokok' ialah Kata Tunggal (satu kata dasar sahaja)." },
+      { word: "buku", type: "Kata Tunggal", exp: "'buku' merupakan Kata Tunggal asas dalam Bahasa Melayu." },
+      { word: "baju", type: "Kata Tunggal", exp: "'baju' ialah Kata Tunggal tanpa sebarang bentuk gandaan." },
+      { word: "laut", type: "Kata Tunggal", exp: "'laut' ialah Kata Tunggal satu kata dasar." },
+      { word: "burung", type: "Kata Tunggal", exp: "'burung' ialah Kata Tunggal yang merujuk kepada haiwan." },
+      { word: "awan", type: "Kata Tunggal", exp: "'awan' ialah Kata Tunggal (tiada pengulangan perkataan)." },
+      { word: "meja", type: "Kata Tunggal", exp: "'meja' ialah Kata Tunggal dasar." },
+      { word: "kasut", type: "Kata Tunggal", exp: "'kasut' ialah Kata Tunggal asas." },
+      { word: "pensel", type: "Kata Tunggal", exp: "'pensel' ialah Kata Tunggal." },
+
+      // KATA GANDA
+      { word: "murid-murid", type: "Kata Ganda", exp: "'murid-murid' ialah Kata Ganda Penuh yang menunjukkan bilangan ramai murid." },
+      { word: "kanak-kanak", type: "Kata Ganda", exp: "'kanak-kanak' ialah Kata Ganda Penuh yang membawa maksud golongan anak-anak kecil." },
+      { word: "buah-buahan", type: "Kata Ganda", exp: "'buah-buahan' ialah Kata Ganda Separa/Berimbuhan yang menunjukkan pelbagai jenis buah." },
+      { word: "rama-rama", type: "Kata Ganda", exp: "'rama-rama' ialah Kata Ganda Semulajadi/Penuh (ia tidak wujud sebagai 'rama' sahaja)." },
+      { word: "gunung-ganang", type: "Kata Ganda", exp: "'gunung-ganang' ialah Kata Ganda Berentak / Berirama yang merujuk kepada deretan gunung." },
+      { word: "lalu-lalang", type: "Kata Ganda", exp: "'lalu-lalang' ialah Kata Ganda Berentak yang menggambarkan pergerakan lalu-lintas." },
+      { word: "cepat-cepat", type: "Kata Ganda", exp: "'cepat-cepat' ialah Kata Ganda Penuh yang menekankan sifat sangat cepat." },
+      { word: "suku-sakat", type: "Kata Ganda", exp: "'suku-sakat' ialah Kata Ganda Berentak yang membawa maksud kaum kerabat." },
+      { word: "layang-layang", type: "Kata Ganda", exp: "'layang-layang' ialah Kata Ganda Penuh." },
+      { word: "kuning-kuningan", type: "Kata Ganda", exp: "'kuning-kuningan' ialah Kata Ganda Berimbuhan." }
+    ];
+
+    /* ===================================================================
+       2. GAME STATE VARIABLES
+       =================================================================== */
+    let stars = 0;
+    let score = 0;
+    let currentLevel = 1;
+    const maxStars = 10;
+    let currentWordObj = null;
+    let isSpinning = false;
+    let soundEnabled = true;
+
+    // Wheel colors
+    const colors = [
+      "#f59e0b", "#ec4899", "#8b5cf6", "#3b82f6", 
+      "#10b981", "#6366f1", "#f43f5e", "#14b8a6"
+    ];
+
+    // Canvas Wheel setup
+    const canvas = document.getElementById("wheel-canvas");
+    const ctx = canvas.getContext("2d");
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
+    const radius = canvas.width / 2 - 10;
+    let currentAngle = 0;
+
+    /* ===================================================================
+       3. WEB AUDIO API SOUND EFFECTS (No external files needed)
+       =================================================================== */
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+    function playSound(type) {
+      if (!soundEnabled) return;
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+
+      const now = audioCtx.currentTime;
+
+      if (type === 'tick') {
+        // Short click for wheel spin
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(400, now);
+        osc.frequency.exponentialRampToValueAtTime(100, now + 0.04);
+        gain.gain.setValueAtTime(0.15, now);
+        gain.gain.linearRampToValueAtTime(0.01, now + 0.04);
+        osc.start(now);
+        osc.stop(now + 0.04);
+      } else if (type === 'win') {
+        // Happy melody for correct answer
+        const notes = [261.63, 329.63, 392.00, 523.25]; // C, E, G, C
+        notes.forEach((freq, idx) => {
+          const noteOsc = audioCtx.createOscillator();
+          const noteGain = audioCtx.createGain();
+          noteOsc.connect(noteGain);
+          noteGain.connect(audioCtx.destination);
+
+          noteOsc.type = 'sine';
+          noteOsc.frequency.setValueAtTime(freq, now + idx * 0.08);
+          noteGain.gain.setValueAtTime(0.2, now + idx * 0.08);
+          noteGain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.08 + 0.25);
+
+          noteOsc.start(now + idx * 0.08);
+          noteOsc.stop(now + idx * 0.08 + 0.25);
+        });
+      } else if (type === 'wrong') {
+        // Low error buzz
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(180, now);
+        osc.frequency.linearRampToValueAtTime(110, now + 0.25);
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.linearRampToValueAtTime(0.01, now + 0.25);
+        osc.start(now);
+        osc.stop(now + 0.25);
+      } else if (type === 'victory') {
+        // Fanfare for game completion
+        const fanfare = [392, 523.25, 659.25, 783.99, 1046.50];
+        fanfare.forEach((f, i) => {
+          const vOsc = audioCtx.createOscillator();
+          const vGain = audioCtx.createGain();
+          vOsc.connect(vGain);
+          vGain.connect(audioCtx.destination);
+          vOsc.type = 'triangle';
+          vOsc.frequency.setValueAtTime(f, now + i * 0.12);
+          vGain.gain.setValueAtTime(0.3, now + i * 0.12);
+          vGain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.12 + 0.35);
+          vOsc.start(now + i * 0.12);
+          vOsc.stop(now + i * 0.12 + 0.35);
+        });
+      }
+    }
+
+    function toggleSound() {
+      soundEnabled = !soundEnabled;
+      document.getElementById('sound-icon').textContent = soundEnabled ? '🔊' : '🔇';
+    }
+
+    /* ===================================================================
+       4. DRAWING THE WHEEL ON CANVAS
+       =================================================================== */
+    function drawWheel() {
+      const numSlices = wordBank.length;
+      const sliceAngle = (2 * Math.PI) / numSlices;
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      for (let i = 0; i < numSlices; i++) {
+        const start = currentAngle + i * sliceAngle;
+        const end = start + sliceAngle;
+
+        // Draw Wedge
+        ctx.beginPath();
+        ctx.moveTo(centerX, centerY);
+        ctx.arc(centerX, centerY, radius, start, end);
+        ctx.closePath();
+        ctx.fillStyle = colors[i % colors.length];
+        ctx.fill();
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // Draw Text
+        ctx.save();
+        ctx.translate(centerX, centerY);
+        ctx.rotate(start + sliceAngle / 2);
+        ctx.textAlign = "right";
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "bold 13px Quicksand, sans-serif";
+        
+        // Truncate text if too long for slice
+        let wordText = wordBank[i].word;
+        if (wordText.length > 12) wordText = wordText.substring(0, 10) + "..";
+        
+        ctx.fillText(wordText, radius - 15, 4);
+        ctx.restore();
+      }
+
+      // Draw Center Hub
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, 25, 0, 2 * Math.PI);
+      ctx.fillStyle = "#1e1b4b";
+      ctx.fill();
+      ctx.strokeStyle = "#f59e0b";
+      ctx.lineWidth = 4;
+      ctx.stroke();
+
+      ctx.fillStyle = "#f59e0b";
+      ctx.font = "bold 14px Quicksand";
+      ctx.textAlign = "center";
+      ctx.fillText("🌟", centerX, centerY + 5);
+    }
+
+    /* ===================================================================
+       5. SPIN THE WHEEL LOGIC
+       =================================================================== */
+    function spinWheel() {
+      if (isSpinning) return;
+      isSpinning = true;
+      document.getElementById('spin-btn').disabled = true;
+
+      // Pick random word index
+      const selectedIndex = Math.floor(Math.random() * wordBank.length);
+      currentWordObj = wordBank[selectedIndex];
+
+      const numSlices = wordBank.length;
+      const sliceAngle = (2 * Math.PI) / numSlices;
+
+      // Calculate target angle to align selected slice with top pointer (3*PI/2)
+      // Top pointer is at 270 degrees (1.5 * Math.PI)
+      const targetSliceCenter = selectedIndex * sliceAngle + sliceAngle / 2;
+      const targetAngleOffset = (1.5 * Math.PI) - targetSliceCenter;
+
+      // Total rotations (5 to 8 full spins + target angle)
+      const extraSpins = (5 + Math.floor(Math.random() * 3)) * 2 * Math.PI;
+      const finalAngle = currentAngle + extraSpins + (targetAngleOffset - (currentAngle % (2 * Math.PI)));
+
+      const duration = 4000; // 4 seconds spin
+      const startTime = performance.now();
+      let lastTickAngle = currentAngle;
+
+      function animateWheel(currentTime) {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+
+        // Ease-out cubic formula for smooth deceleration
+        const easeOut = 1 - Math.pow(1 - progress, 3);
+        currentAngle = currentAngle + (finalAngle - currentAngle) * (easeOut * 0.08);
+
+        // Play tick sound when passing slice boundaries
+        if (Math.abs(currentAngle - lastTickAngle) >= sliceAngle) {
+          playSound('tick');
+          lastTickAngle = currentAngle;
+        }
+
+        drawWheel();
+
+        if (progress < 1 && Math.abs(finalAngle - currentAngle) > 0.002) {
+          requestAnimationFrame(animateWheel);
+        } else {
+          currentAngle = finalAngle;
+          drawWheel();
+          isSpinning = false;
+          document.getElementById('spin-btn').disabled = false;
+          
+          // Transition to Question screen after short pause
+          setTimeout(showQuestionScreen, 600);
+        }
+      }
+
+      requestAnimationFrame(animateWheel);
+    }
+
+    /* ===================================================================
+       6. SCREEN TRANSITIONS & QUESTION LOGIC
+       =================================================================== */
+    function showQuestionScreen() {
+      document.getElementById('wheel-screen').classList.add('hidden');
+      document.getElementById('target-word').textContent = currentWordObj.word;
+      document.getElementById('question-card').classList.remove('hidden');
+      document.getElementById('question-card').classList.add('flex');
+    }
+
+    function checkAnswer(selectedType) {
+      document.getElementById('question-card').classList.add('hidden');
+      document.getElementById('question-card').classList.remove('flex');
+
+      const isCorrect = selectedType === currentWordObj.type;
+      const feedbackCard = document.getElementById('feedback-card');
+      const feedbackIcon = document.getElementById('feedback-icon');
+      const feedbackTitle = document.getElementById('feedback-title');
+      const feedbackExp = document.getElementById('feedback-explanation');
+
+      if (isCorrect) {
+        playSound('win');
+        stars += 1;
+        score += 100 * currentLevel;
+        
+        feedbackIcon.textContent = "🎉";
+        feedbackTitle.textContent = "TAHNIAH! JAWAPAN BETUL!";
+        feedbackTitle.className = "font-heading text-2xl sm:text-3xl text-emerald-400";
+        feedbackExp.innerHTML = `<span class="text-emerald-300 font-bold">Syabas!</span> ${currentWordObj.exp}`;
+
+        // Trigger Confetti Effect
+        if (typeof confetti === 'function') {
+          confetti({
+            particleCount: 80,
+            spread: 70,
+            origin: { y: 0.6 }
+          });
+        }
+      } else {
+        playSound('wrong');
+        feedbackIcon.textContent = "💡";
+        feedbackTitle.textContent = "TIDAK MENGAPA, CUBA LAGI!";
+        feedbackTitle.className = "font-heading text-2xl sm:text-3xl text-amber-300";
+        feedbackExp.innerHTML = `<span class="text-amber-300 font-bold">Jawapan Tepat: ${currentWordObj.type}</span>.<br><br>${currentWordObj.exp}`;
+      }
+
+      updateUI();
+
+      feedbackCard.classList.remove('hidden');
+      feedbackCard.classList.add('flex');
+    }
+
+    function nextRound() {
+      document.getElementById('feedback-card').classList.add('hidden');
+      document.getElementById('feedback-card').classList.remove('flex');
+
+      // Check level update logic
+      if (stars >= 4 && currentLevel === 1) {
+        currentLevel = 2;
+      } else if (stars >= 7 && currentLevel === 2) {
+        currentLevel = 3;
+      }
+
+      // Check Game Victory condition
+      if (stars >= maxStars) {
+        showVictoryScreen();
+      } else {
+        updateUI();
+        document.getElementById('wheel-screen').classList.remove('hidden');
+      }
+    }
+
+    function showVictoryScreen() {
+      playSound('victory');
+      if (typeof confetti === 'function') {
+        confetti({ particleCount: 150, spread: 100, origin: { y: 0.5 } });
+      }
+
+      document.getElementById('final-score').textContent = score;
+      document.getElementById('victory-card').classList.remove('hidden');
+      document.getElementById('victory-card').classList.add('flex');
+    }
+
+    function updateUI() {
+      document.getElementById('star-count').textContent = `${stars}/${maxStars}`;
+      document.getElementById('score-val').textContent = score;
+      document.getElementById('level-num').textContent = currentLevel;
+
+      const progressPercent = Math.min((stars / maxStars) * 100, 100);
+      document.getElementById('progress-bar').style.width = `${progressPercent}%`;
+    }
+
+    function resetGame() {
+      stars = 0;
+      score = 0;
+      currentLevel = 1;
+      updateUI();
+
+      document.getElementById('victory-card').classList.add('hidden');
+      document.getElementById('victory-card').classList.remove('flex');
+      document.getElementById('wheel-screen').classList.remove('hidden');
+
+      drawWheel();
+    }
+
+    /* ===================================================================
+       7. INITIALIZATION ON LOAD
+       =================================================================== */
+    window.onload = function() {
+      drawWheel();
+      updateUI();
+    };
+  </script>
+</body>
+</html>
